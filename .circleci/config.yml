@@ -1,13 +1,8 @@
 version: 2
-workflows:
-  build-deploy:
-    jobs:
-        - build:
-          context: Maven Repo
 jobs:
   build:
     machine: true
     steps:
       - checkout
       # build the application image
-      - run: docker build --build-arg goal=deploy -t stephub/spring-provider:$CIRCLE_BRANCH .
+      - run: docker build -e BINTRAY_USERNAME=$BINTRAY_USERNAME -e BINTRAY_PASSWORD=$BINTRAY_PASSWORD --build-arg goal=deploy -t stephub/spring-provider:$CIRCLE_BRANCH .
