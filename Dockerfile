@@ -3,4 +3,4 @@ WORKDIR /workspace
 
 COPY . ./
 ARG goal=package
-RUN mvn $goal
+RUN mvn $goal -s build/settings.xml
