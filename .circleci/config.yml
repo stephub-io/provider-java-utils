@@ -1,4 +1,9 @@
 version: 2
+workflows:
+  build-deploy:
+    jobs:
+        - build:
+          context: Maven Repo
 jobs:
   build:
     machine: true
