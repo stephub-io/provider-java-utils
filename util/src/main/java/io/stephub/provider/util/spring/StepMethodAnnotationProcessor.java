@@ -5,8 +5,9 @@ import io.stephub.provider.util.ProviderException;
 import io.stephub.provider.util.model.StepRequest;
 import io.stephub.provider.util.model.StepResponse;
 import io.stephub.provider.util.model.spec.ArgumentSpec;
-import io.stephub.provider.util.model.spec.PatternType;
 import io.stephub.provider.util.model.spec.StepSpec;
+import io.stephub.provider.util.spring.annotation.StepArgument;
+import io.stephub.provider.util.spring.annotation.StepMethod;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -14,10 +15,6 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -122,21 +119,5 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
         Object getParameter(String sessionId, LocalProviderAdapter.SessionState state, StepRequest request);
     }
 
-
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target({ElementType.METHOD})
-    public @interface StepMethod {
-        String pattern();
-
-        Class<? extends SpringBeanProvider> provider() default SpringBeanProvider.class;
-
-        PatternType patternType() default PatternType.REGEX;
-    }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target({ElementType.PARAMETER})
-    public @interface StepArgument {
-        String name();
-    }
 
 }
