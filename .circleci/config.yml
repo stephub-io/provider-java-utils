@@ -1,9 +1,6 @@
 version: 2
 jobs:
   build:
-    filters:
-      tags:
-        ignore: /.*/
     machine: true
     environment:
       GOAL: package
@@ -11,12 +8,20 @@ jobs:
       - checkout
       - run: docker build --build-arg version=$CIRCLE_BRANCH --build-arg goal=$GOAL -t stephub/spring-provider:$CIRCLE_BRANCH .
   build-and-deploy:
-    filters:
-      tags:
-        only: /.*/
     machine: true
     environment:
       GOAL: deploy
     steps:
       - checkout
       - run: docker build --build-arg version=$CIRCLE_TAG --build-arg repo_username=$BINTRAY_USERNAME --build-arg repo_password=$BINTRAY_PASSWORD --build-arg goal=$GOAL -t stephub/spring-provider:$CIRCLE_TAG .
+workflows:
+  version: 2
+  untagged-build:
+    jobs:
+      - build
+  tagged-build:
+    jobs:
+      - build-and-deploy:
+          filters:
+            tags:
+              only: /^[0-9\.]+/
