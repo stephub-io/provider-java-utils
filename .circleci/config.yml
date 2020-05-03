@@ -13,7 +13,7 @@ jobs:
   build-and-deploy:
     filters:
       tags:
-        only: /^[\d\.]+/
+        only: /^[0-9.]+/
       branches:
         ignore: /.*/
     machine: true
