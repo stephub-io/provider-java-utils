@@ -7,10 +7,9 @@ jobs:
     machine: true
     environment:
       GOAL: package
-      VERSION: << pipeline.git.branch >>
     steps:
       - checkout
-      - run: docker build --build-arg version=$VERSION --build-arg goal=$GOAL -t stephub/spring-provider:$CIRCLE_BRANCH .
+      - run: docker build --build-arg version=$CIRCLE_BRANCH --build-arg goal=$GOAL -t stephub/spring-provider:$CIRCLE_BRANCH .
   build-and-deploy:
     filters:
       tags:
@@ -20,7 +19,6 @@ jobs:
     machine: true
     environment:
       GOAL: deploy
-      VERSION: << pipeline.git.tag >>
     steps:
       - checkout
-      - run: docker build --build-arg version=$VERSION --build-arg repo_username=$BINTRAY_USERNAME --build-arg repo_password=$BINTRAY_PASSWORD --build-arg goal=$GOAL -t stephub/spring-provider:$CIRCLE_BRANCH .
+      - run: docker build --build-arg version=$CIRCLE_TAG --build-arg repo_username=$BINTRAY_USERNAME --build-arg repo_password=$BINTRAY_PASSWORD --build-arg goal=$GOAL -t stephub/spring-provider:$CIRCLE_BRANCH .
