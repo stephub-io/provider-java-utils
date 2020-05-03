@@ -14,8 +14,6 @@ jobs:
     filters:
       tags:
         only: /^[0-9.]+/
-      branches:
-        ignore: /.*/
     machine: true
     environment:
       GOAL: deploy
