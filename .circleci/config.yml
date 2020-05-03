@@ -13,7 +13,7 @@ jobs:
   build-and-deploy:
     filters:
       tags:
-        only: /^[0-9.]+/
+        only: /.*/
     machine: true
     environment:
       GOAL: deploy
