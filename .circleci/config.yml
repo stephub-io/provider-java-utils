@@ -1,8 +1,26 @@
 version: 2
 jobs:
   build:
+    filters:
+      tags:
+        ignore: /.*/
     machine: true
+    environment:
+      GOAL: package
+      VERSION: << pipeline.git.branch >>
     steps:
       - checkout
-      # build the application image
-      - run: docker build --build-arg repo_username=$BINTRAY_USERNAME --build-arg repo_password=$BINTRAY_PASSWORD --build-arg goal=deploy -t stephub/spring-provider:$CIRCLE_BRANCH .
+      - run: docker build --build-arg version=$VERSION --build-arg goal=$GOAL -t stephub/spring-provider:$CIRCLE_BRANCH .
+  build-and-deploy:
+    filters:
+      tags:
+        only: /^[\d\.]+/
+      branches:
+        ignore: /.*/
+    machine: true
+    environment:
+      GOAL: deploy
+      VERSION: << pipeline.git.tag >>
+    steps:
+      - checkout
+      - run: docker build --build-arg version=$VERSION --build-arg repo_username=$BINTRAY_USERNAME --build-arg repo_password=$BINTRAY_PASSWORD --build-arg goal=$GOAL -t stephub/spring-provider:$CIRCLE_BRANCH .
