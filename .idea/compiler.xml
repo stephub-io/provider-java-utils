@@ -2,16 +2,24 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
       <profile name="Maven default annotation processors profile" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="spring-provider-api" />
+        <module name="spring-provider-web" />
         <module name="spring-provider-util" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="api" target="10" />
+      <module name="spring-provider" target="10" />
+      <module name="spring-provider-api" target="10" />
       <module name="spring-provider-util" target="10" />
+      <module name="spring-provider-web" target="10" />
       <module name="util" target="10" />
+      <module name="web" target="10" />
     </bytecodeTargetLevel>
   </component>
 </project>
