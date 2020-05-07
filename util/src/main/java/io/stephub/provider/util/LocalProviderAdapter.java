@@ -1,5 +1,6 @@
 package io.stephub.provider.util;
 
+import io.stephub.provider.api.Provider;
 import io.stephub.provider.api.ProviderException;
 import io.stephub.provider.api.model.ProviderInfo;
 import io.stephub.provider.api.model.ProviderOptions;
@@ -15,7 +16,8 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public abstract class LocalProviderAdapter<S extends LocalProviderAdapter.SessionState<PO>, PO, SCHEMA, VALUE> {
+public abstract class LocalProviderAdapter<S extends LocalProviderAdapter.SessionState<PO>, PO, SCHEMA, VALUE>
+        implements Provider<PO, SCHEMA, VALUE> {
 
     private final ExpiringMap<String, S> sessionStore = ExpiringMap.builder()
             .expirationListener((sessionId, state) -> {
@@ -32,6 +34,7 @@ public abstract class LocalProviderAdapter<S extends LocalProviderAdapter.Sessio
         private ProviderOptions<PO> providerOptions;
     }
 
+    @Override
     public final String createSession(final ProviderOptions<PO> options) {
         final String sessionId = UUID.randomUUID().toString();
         final S state = this.startState(sessionId, options);
@@ -48,12 +51,15 @@ public abstract class LocalProviderAdapter<S extends LocalProviderAdapter.Sessio
 
     protected abstract StepResponse<VALUE> executeWithinState(String sessionId, S state, StepRequest<VALUE> request);
 
+    @Override
     public abstract ProviderInfo<SCHEMA> getInfo();
 
+    @Override
     public final StepResponse<VALUE> execute(final String sessionId, final StepRequest<VALUE> request) {
         return this.executeWithinState(sessionId, this.getStateSafe(sessionId), request);
     }
 
+    @Override
     public final void destroySession(final String sessionId) {
         this.stopState(this.getStateSafe(sessionId));
         this.sessionStore.remove(sessionId);
