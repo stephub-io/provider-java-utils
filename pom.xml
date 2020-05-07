@@ -31,7 +31,7 @@
         <repository>
             <id>bintray-mbok-stephub.io</id>
             <name>mbok-stephub.io</name>
-            <url>https://api.bintray.com/maven/mbok/stephub.io/spring-provider-util/;publish=1</url>
+            <url>https://api.bintray.com/maven/mbok/stephub.io/spring-provider/;publish=1</url>
         </repository>
     </distributionManagement>
 
