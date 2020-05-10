@@ -12,7 +12,6 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.InvocationTargetException;
@@ -20,7 +19,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.time.Duration;
 
-@Component
 public class StepMethodAnnotationProcessor implements BeanPostProcessor {
 
     private final ConfigurableListableBeanFactory configurableBeanFactory;
@@ -62,12 +60,12 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
                     id(method.getName()).
                     pattern(stepMethodAno.pattern()).
                     patternType(stepMethodAno.patternType());
-            provider.stepInvokers.put(method.getName(), buildInvoker(bean, method, specBuilder));
+            provider.stepInvokers.put(method.getName(), this.buildInvoker(bean, method, specBuilder));
             provider.stepSpecs.add(specBuilder.build());
         }, method -> method.isAnnotationPresent(StepMethod.class));
     }
 
-    private static SpringBeanProvider.StepInvoker<Object> buildInvoker(final Object bean, final Method stepMethod, final StepSpec.StepSpecBuilder<Object> specBuilder) {
+    private SpringBeanProvider.StepInvoker<Object> buildInvoker(final Object bean, final Method stepMethod, final StepSpec.StepSpecBuilder<Object> specBuilder) {
         final Parameter[] parameters = stepMethod.getParameters();
         final ParameterAccessor[] parameterAccessors = new ParameterAccessor[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
@@ -88,7 +86,7 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
                     }));
                     specBuilder.argument(
                             ArgumentSpec.builder().name(expectedArgument.name()).
-                                    schema(parameter.getType()).
+                                    schema(this.wrapSchema(parameter.getType())).
                                     build()
                     );
                 } else {
@@ -113,6 +111,10 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
                 throw new ProviderException("Failed to invoke step method=" + stepMethod.getName(), e);
             }
         }));
+    }
+
+    protected Object wrapSchema(final Class<?> type) {
+        return type;
     }
 
     private interface ParameterAccessor {
