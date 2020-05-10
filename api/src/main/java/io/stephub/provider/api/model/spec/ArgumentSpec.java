@@ -1,7 +1,5 @@
 package io.stephub.provider.api.model.spec;
 
-import io.stephub.provider.api.jackson.ClassToSchemaSerializer;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.*;
 
 @AllArgsConstructor
@@ -12,6 +10,5 @@ import lombok.*;
 @ToString
 public class ArgumentSpec<SCHEMA> {
     private String name;
-    @JsonSerialize(using = ClassToSchemaSerializer.class)
     private SCHEMA schema;
 }

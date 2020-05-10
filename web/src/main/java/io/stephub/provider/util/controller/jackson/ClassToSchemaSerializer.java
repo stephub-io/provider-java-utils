@@ -1,4 +1,4 @@
-package io.stephub.provider.api.jackson;
+package io.stephub.provider.util.controller.jackson;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;

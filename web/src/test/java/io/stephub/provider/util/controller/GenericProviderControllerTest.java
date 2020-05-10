@@ -6,7 +6,6 @@ import io.stephub.provider.api.model.StepRequest;
 import io.stephub.provider.api.model.StepResponse;
 import io.stephub.provider.util.LocalProviderAdapter;
 import io.stephub.provider.util.spring.SpringBeanProvider;
-import io.stephub.provider.util.spring.StepMethodAnnotationProcessor;
 import io.stephub.provider.util.spring.annotation.StepArgument;
 import io.stephub.provider.util.spring.annotation.StepMethod;
 import lombok.AllArgsConstructor;
@@ -40,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = GenericProviderController.class)
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {GenericProviderController.class, StepMethodAnnotationProcessor.class})
+@ContextConfiguration(classes = {ProviderUtilConfiguration.class})
 public class GenericProviderControllerTest {
 
     @SpyBean
