@@ -6,6 +6,8 @@ import io.stephub.provider.api.model.StepResponse;
 import io.stephub.provider.util.LocalProviderAdapter;
 import io.stephub.provider.util.spring.annotation.StepArgument;
 import io.stephub.provider.util.spring.annotation.StepMethod;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +25,7 @@ import static org.mockito.Mockito.*;
 @ContextConfiguration(classes = {StepMethodAnnotationProcessor.class, StepMethodAnnotationProcessorTest.SomeBean.class})
 class StepMethodAnnotationProcessorTest {
 
-    public static class TestProvider extends SpringBeanProvider<LocalProviderAdapter.SessionState<Object>, Object, Class<?>, Object> {
+    public static class TestProvider extends SpringBeanProvider<TestState, Object, Class<?>, Object> {
         private final TestProvider mock = mock(TestProvider.class);
 
         {
@@ -34,29 +36,29 @@ class StepMethodAnnotationProcessorTest {
             }
         }
 
-        private SessionState<Object> state;
+        private TestState state;
 
         @StepMethod(pattern = "Bla bla")
-        public StepResponse testStepNoArgs() throws InterruptedException {
+        public StepResponse<Object> testStepNoArgs() throws InterruptedException {
             Thread.sleep(1000);
             return this.mock.testStepNoArgs();
         }
 
         @StepMethod(pattern = "Bla bla multiple")
-        public StepResponse testStepMultipleArgs(final SessionState<Object> someState,
+        public StepResponse<Object> testStepMultipleArgs(final TestState someState,
                                                  @StepArgument(name = "enabled") final boolean arg1,
                                                  @StepArgument(name = "data") final String arg2) {
             return this.mock.testStepMultipleArgs(someState, arg1, arg2);
         }
 
         @Override
-        protected SessionState<Object> startState(final String sessionId, final ProviderOptions<Object> options) {
-            this.state = mock(SessionState.class);
+        protected TestState startState(final String sessionId, final ProviderOptions<Object> options) {
+            this.state = mock(TestState.class);
             return this.state;
         }
 
         @Override
-        protected void stopState(final SessionState<Object> state) {
+        protected void stopState(final TestState state) {
 
         }
 
@@ -71,12 +73,17 @@ class StepMethodAnnotationProcessorTest {
         }
     }
 
+    @SuperBuilder
+    public static class TestState extends LocalProviderAdapter.SessionState<Object> {
+
+    }
+
     @Component
     public static class SomeBean {
         private final SomeBean mock = mock(SomeBean.class);
 
         @StepMethod(pattern = "Bla bla blub", provider = TestProvider.class)
-        public StepResponse testStepExternalNoArgs() {
+        public StepResponse<Object> testStepExternalNoArgs() {
             return this.mock.testStepExternalNoArgs();
         }
     }

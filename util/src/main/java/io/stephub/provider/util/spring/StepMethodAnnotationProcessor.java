@@ -73,7 +73,7 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
         for (int i = 0; i < parameters.length; i++) {
             final Parameter parameter = parameters[i];
             ParameterAccessor accessor = null;
-            if (parameter.getType().isAssignableFrom(LocalProviderAdapter.SessionState.class)) {
+            if (LocalProviderAdapter.SessionState.class.isAssignableFrom(parameter.getType())) {
                 accessor = ((sessionId, state, request) -> state);
             } else {
                 final StepArgument expectedArgument = parameter.getAnnotation(StepArgument.class);
