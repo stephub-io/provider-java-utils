@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.stereotype.Component;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -105,6 +106,7 @@ class StepMethodAnnotationProcessorTest {
     }
 
     @Test
+    @DirtiesContext
     public void testStepErroneous() throws InterruptedException {
         when(testProvider.mock.testStepNoArgs()).thenThrow(new RuntimeException("Doesn't work"));
         final String sid = this.testProvider.createSession(ProviderOptions.builder().sessionTimeout(ofMinutes(1)).build());
