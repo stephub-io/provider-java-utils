@@ -15,7 +15,7 @@ import java.util.Map;
 @EqualsAndHashCode
 public class StepResponse<VALUE> {
     public enum StepStatus {
-        PASSED, FAILED;
+        PASSED, FAILED, ERRONEOUS;
 
         @Override
         @JsonValue
@@ -27,6 +27,7 @@ public class StepResponse<VALUE> {
     private StepStatus status;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Duration duration;
+    private String errorMessage;
     @Singular
     private Map<String, VALUE> outputs = new HashMap<>();
 }

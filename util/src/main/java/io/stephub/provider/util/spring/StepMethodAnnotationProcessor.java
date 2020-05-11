@@ -8,6 +8,7 @@ import io.stephub.provider.api.model.spec.StepSpec;
 import io.stephub.provider.util.LocalProviderAdapter;
 import io.stephub.provider.util.spring.annotation.StepArgument;
 import io.stephub.provider.util.spring.annotation.StepMethod;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -19,6 +20,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.time.Duration;
 
+import static io.stephub.provider.api.model.StepResponse.StepStatus.ERRONEOUS;
+
+@Slf4j
 public class StepMethodAnnotationProcessor implements BeanPostProcessor {
 
     private final ConfigurableListableBeanFactory configurableBeanFactory;
@@ -100,15 +104,21 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
             for (int i = 0; i < parameterAccessors.length; i++) {
                 args[i] = parameterAccessors[i].getParameter(sessionId, state, request);
             }
+            final long start = System.currentTimeMillis();
             try {
-                final long start = System.currentTimeMillis();
                 final StepResponse<Object> response = (StepResponse<Object>) stepMethod.invoke(bean, args);
                 if (response != null && response.getDuration() == null) {
                     response.setDuration(Duration.ofMillis(System.currentTimeMillis() - start));
                 }
                 return response;
-            } catch (final IllegalAccessException | InvocationTargetException e) {
-                throw new ProviderException("Failed to invoke step method=" + stepMethod.getName(), e);
+            } catch (Throwable e) {
+                if (e instanceof InvocationTargetException) {
+                    e = e.getCause();
+                }
+                log.info("Failed to invoke step method=" + stepMethod.getName(), e);
+                return StepResponse.builder().status(ERRONEOUS).errorMessage(e.getMessage()).
+                        duration(Duration.ofMillis(System.currentTimeMillis() - start)).
+                        build();
             }
         }));
     }

@@ -16,8 +16,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import static io.stephub.provider.api.model.StepResponse.StepStatus.ERRONEOUS;
 import static java.time.Duration.ofMinutes;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.mockito.Mockito.*;
 
@@ -99,6 +101,17 @@ class StepMethodAnnotationProcessorTest {
         final String sid = this.testProvider.createSession(ProviderOptions.builder().sessionTimeout(ofMinutes(1)).build());
         final StepResponse response = this.testProvider.execute(sid, StepRequest.builder().id("testStepNoArgs").build());
         verify(this.testProvider.mock).testStepNoArgs();
+        assertThat(response.getDuration().getSeconds(), greaterThanOrEqualTo(1l));
+    }
+
+    @Test
+    public void testStepErroneous() throws InterruptedException {
+        when(testProvider.mock.testStepNoArgs()).thenThrow(new RuntimeException("Doesn't work"));
+        final String sid = this.testProvider.createSession(ProviderOptions.builder().sessionTimeout(ofMinutes(1)).build());
+        final StepResponse response = this.testProvider.execute(sid, StepRequest.builder().id("testStepNoArgs").build());
+        verify(this.testProvider.mock).testStepNoArgs();
+        assertThat(response.getStatus(),equalTo(ERRONEOUS));
+        assertThat(response.getErrorMessage(),equalTo("Doesn't work"));
         assertThat(response.getDuration().getSeconds(), greaterThanOrEqualTo(1l));
     }
 
