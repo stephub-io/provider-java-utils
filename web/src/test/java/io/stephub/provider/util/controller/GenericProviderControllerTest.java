@@ -5,7 +5,6 @@ import io.stephub.provider.api.model.ProviderOptions;
 import io.stephub.provider.api.model.StepRequest;
 import io.stephub.provider.api.model.StepResponse;
 import io.stephub.provider.util.LocalProviderAdapter;
-import io.stephub.provider.util.spring.SpringBeanProvider;
 import io.stephub.provider.util.spring.annotation.StepArgument;
 import io.stephub.provider.util.spring.annotation.StepMethod;
 import lombok.AllArgsConstructor;
@@ -104,7 +103,7 @@ public class GenericProviderControllerTest {
         final String sid = this.provider.createSession(new ProviderOptions<>());
         when(this.provider.mock.step1(true, "Hello")).thenReturn(
                 StepResponse.builder().status(PASSED).
-                        output("abc", 175).
+                        output(175).
                         build()
         );
 
@@ -120,13 +119,12 @@ public class GenericProviderControllerTest {
                 andDo(print()).andExpect(status().isOk()).
                 andExpect(jsonPath("$.status", is(PASSED.toString()))).
                 andExpect(jsonPath("$.duration", Matchers.startsWith("PT"))).
-                andExpect(jsonPath("$.outputs").isMap()).
-                andExpect(jsonPath("$.outputs.abc", is(175)));
+                andExpect(jsonPath("$.output", is(175)));
         verify(this.provider.mock, times(1)).
                 step1(true, "Hello");
     }
 
-    public static class DummyProvider extends SpringBeanProvider<DummyState, DummyOptions, Class<?>, Object> {
+    public static class DummyProvider extends LocalSpringBeanProviderAdapter<DummyState, DummyOptions> {
         private final DummyProvider mock = mock(DummyProvider.class);
 
         @Override
@@ -135,7 +133,7 @@ public class GenericProviderControllerTest {
         }
 
         @Override
-        protected Class<? extends DummyOptions> getOptionsSchema() {
+        protected Class<? extends DummyOptions> getOptionsSchemaClass() {
             return DummyOptions.class;
         }
 
@@ -150,7 +148,7 @@ public class GenericProviderControllerTest {
         }
 
         @StepMethod(pattern = ".*")
-        public StepResponse step1(@StepArgument(name = "arg1") final boolean arg1,
+        public StepResponse<Object> step1(@StepArgument(name = "arg1") final boolean arg1,
                                   @StepArgument(name = "arg2") final String arg2) {
             return this.mock.step1(arg1, arg2);
         }

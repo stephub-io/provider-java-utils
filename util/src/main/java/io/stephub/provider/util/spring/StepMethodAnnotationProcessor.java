@@ -4,8 +4,10 @@ import io.stephub.provider.api.ProviderException;
 import io.stephub.provider.api.model.StepRequest;
 import io.stephub.provider.api.model.StepResponse;
 import io.stephub.provider.api.model.spec.ArgumentSpec;
+import io.stephub.provider.api.model.spec.OutputSpec;
 import io.stephub.provider.api.model.spec.StepSpec;
 import io.stephub.provider.util.LocalProviderAdapter;
+import io.stephub.provider.util.StepFailedException;
 import io.stephub.provider.util.spring.annotation.StepArgument;
 import io.stephub.provider.util.spring.annotation.StepMethod;
 import lombok.extern.slf4j.Slf4j;
@@ -15,12 +17,13 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.util.ReflectionUtils;
 
+import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.time.Duration;
 
-import static io.stephub.provider.api.model.StepResponse.StepStatus.ERRONEOUS;
+import static io.stephub.provider.api.model.StepResponse.StepStatus.*;
 
 @Slf4j
 public class StepMethodAnnotationProcessor implements BeanPostProcessor {
@@ -90,7 +93,8 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
                     }));
                     specBuilder.argument(
                             ArgumentSpec.builder().name(expectedArgument.name()).
-                                    schema(this.wrapSchema(parameter.getType())).
+                                    schema(this.wrapSchema(parameter.getAnnotatedType())).
+                                    strict(expectedArgument.strict()).
                                     build()
                     );
                 } else {
@@ -99,6 +103,11 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
             }
             parameterAccessors[i] = accessor;
         }
+        final AnnotatedType returnType = stepMethod.getAnnotatedReturnType();
+        if (returnType != null && !stepMethod.getReturnType().equals(Void.TYPE) &&
+                !StepResponse.class.isAssignableFrom(stepMethod.getReturnType())) {
+            specBuilder.output(OutputSpec.builder().schema(this.wrapSchema(returnType)).build());
+        }
         return (((sessionId, state, request) -> {
             final Object[] args = new Object[parameterAccessors.length];
             for (int i = 0; i < parameterAccessors.length; i++) {
@@ -106,24 +115,36 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
             }
             final long start = System.currentTimeMillis();
             try {
-                final StepResponse<Object> response = (StepResponse<Object>) stepMethod.invoke(bean, args);
-                if (response != null && response.getDuration() == null) {
-                    response.setDuration(Duration.ofMillis(System.currentTimeMillis() - start));
+                StepResponse<Object> stepResponse = null;
+                final Object objResponse = stepMethod.invoke(bean, args);
+                final long end = System.currentTimeMillis();
+                if (objResponse instanceof StepResponse) {
+                    stepResponse = (StepResponse<Object>) objResponse;
+                } else {
+                    stepResponse = new StepResponse<>();
+                    stepResponse.setStatus(PASSED);
+                    stepResponse.setOutput(objResponse);
                 }
-                return response;
+                if (stepResponse.getDuration() == null) {
+                    stepResponse.setDuration(Duration.ofMillis(end - start));
+                }
+                return stepResponse;
             } catch (Throwable e) {
                 if (e instanceof InvocationTargetException) {
                     e = e.getCause();
                 }
-                log.info("Failed to invoke step method=" + stepMethod.getName(), e);
-                return StepResponse.builder().status(ERRONEOUS).errorMessage(e.getMessage()).
+                final StepResponse.StepStatus status = e instanceof StepFailedException ? FAILED : ERRONEOUS;
+                if (status == ERRONEOUS) {
+                    log.info("Failed to invoke step method=" + stepMethod.getName(), e);
+                }
+                return StepResponse.builder().status(status).errorMessage(e.getMessage()).
                         duration(Duration.ofMillis(System.currentTimeMillis() - start)).
                         build();
             }
         }));
     }
 
-    protected Object wrapSchema(final Class<?> type) {
+    protected Object wrapSchema(final AnnotatedType type) {
         return type;
     }
 

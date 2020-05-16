@@ -33,4 +33,5 @@ public class StepSpec<SCHEMA> {
     private PayloadType payload = PayloadType.NONE;
     private DataTableSpec<SCHEMA> dataTable;
     private DocStringSpec<SCHEMA> docString;
+    private OutputSpec<SCHEMA> output;
 }

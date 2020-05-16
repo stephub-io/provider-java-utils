@@ -5,8 +5,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.*;
 
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,6 +26,5 @@ public class StepResponse<VALUE> {
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Duration duration;
     private String errorMessage;
-    @Singular
-    private Map<String, VALUE> outputs = new HashMap<>();
+    private VALUE output;
 }

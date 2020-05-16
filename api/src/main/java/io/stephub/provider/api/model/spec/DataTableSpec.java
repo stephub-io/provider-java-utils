@@ -1,6 +1,7 @@
 package io.stephub.provider.api.model.spec;
 
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 
@@ -13,13 +14,12 @@ import java.util.List;
 public class DataTableSpec<SCHEMA> {
     @NoArgsConstructor
     @AllArgsConstructor
-    @Builder
+    @SuperBuilder
     @Getter
     @ToString
-    @EqualsAndHashCode
-    public static class ColumnSpec<SCHEMA> {
+    @EqualsAndHashCode(callSuper = true)
+    public static class ColumnSpec<SCHEMA> extends ValueSpec<SCHEMA> {
         private String name;
-        private SCHEMA schema;
     }
 
     private boolean header;
