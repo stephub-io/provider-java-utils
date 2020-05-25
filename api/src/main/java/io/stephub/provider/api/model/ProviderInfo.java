@@ -2,10 +2,11 @@ package io.stephub.provider.api.model;
 
 import io.stephub.provider.api.model.spec.StepSpec;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 
-@Builder
+@SuperBuilder
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

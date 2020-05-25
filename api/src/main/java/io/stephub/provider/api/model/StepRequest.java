@@ -1,6 +1,7 @@
 package io.stephub.provider.api.model;
 
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.Map;
 @Data
 @EqualsAndHashCode
 @Getter
-@Builder
+@SuperBuilder
 public class StepRequest<VALUE> {
     @NotNull
     private String id;

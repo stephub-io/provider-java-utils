@@ -3,13 +3,14 @@ package io.stephub.provider.api.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.Duration;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-@Builder
+@SuperBuilder
 @EqualsAndHashCode
 public class StepResponse<VALUE> {
     public enum StepStatus {
