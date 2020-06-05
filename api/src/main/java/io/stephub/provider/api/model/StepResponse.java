@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.time.Duration;
 
 @NoArgsConstructor
@@ -22,10 +24,12 @@ public class StepResponse<VALUE> {
             return this.name().toLowerCase();
         }
     }
-
+    @NotNull
     private StepStatus status;
+    @NotNull
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Duration duration;
     private String errorMessage;
+    @Valid
     private VALUE output;
 }
