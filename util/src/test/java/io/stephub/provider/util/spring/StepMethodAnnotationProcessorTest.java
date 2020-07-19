@@ -19,8 +19,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import static io.stephub.provider.api.model.StepResponse.StepStatus.ERRONEOUS;
 import static java.time.Duration.ofMinutes;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
@@ -151,11 +150,8 @@ class StepMethodAnnotationProcessorTest {
     @Test
     public void testDuplicateNamedStepMethods() throws InterruptedException {
         final String sid = this.testProvider.createSession(ProviderOptions.builder().sessionTimeout(ofMinutes(1)).build());
-        this.testProvider.execute(sid, StepRequest.builder().id("dup").build());
-        verify(this.testProvider.mock).dup();
-        verify(this.testProvider.mock, times(0)).dup(anyString());
-        this.testProvider.execute(sid, StepRequest.builder().id("dup_1").argument("data", "abc").build());
-        verify(this.testProvider.mock).dup("abc");
+        assertThat(this.testProvider.stepInvokers, hasKey("dup"));
+        assertThat(this.testProvider.stepInvokers, hasKey("dup_1"));
     }
 
 }
