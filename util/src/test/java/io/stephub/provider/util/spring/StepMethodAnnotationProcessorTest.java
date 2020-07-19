@@ -6,7 +6,6 @@ import io.stephub.provider.api.model.StepResponse;
 import io.stephub.provider.util.LocalProviderAdapter;
 import io.stephub.provider.util.spring.annotation.StepArgument;
 import io.stephub.provider.util.spring.annotation.StepMethod;
-import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,9 +48,19 @@ class StepMethodAnnotationProcessorTest {
 
         @StepMethod(pattern = "Bla bla multiple")
         public StepResponse<Object> testStepMultipleArgs(final TestState someState,
-                                                 @StepArgument(name = "enabled") final boolean arg1,
-                                                 @StepArgument(name = "data") final String arg2) {
+                                                         @StepArgument(name = "enabled") final boolean arg1,
+                                                         @StepArgument(name = "data") final String arg2) {
             return this.mock.testStepMultipleArgs(someState, arg1, arg2);
+        }
+
+        @StepMethod(pattern = "Dup1")
+        public StepResponse<Object> dup() {
+            return this.mock.dup();
+        }
+
+        @StepMethod(pattern = "Dup2")
+        public StepResponse<Object> dup(@StepArgument(name = "data") final String arg) {
+            return this.mock.dup(arg);
         }
 
         @Override
@@ -108,12 +117,12 @@ class StepMethodAnnotationProcessorTest {
     @Test
     @DirtiesContext
     public void testStepErroneous() throws InterruptedException {
-        when(testProvider.mock.testStepNoArgs()).thenThrow(new RuntimeException("Doesn't work"));
+        when(this.testProvider.mock.testStepNoArgs()).thenThrow(new RuntimeException("Doesn't work"));
         final String sid = this.testProvider.createSession(ProviderOptions.builder().sessionTimeout(ofMinutes(1)).build());
         final StepResponse response = this.testProvider.execute(sid, StepRequest.builder().id("testStepNoArgs").build());
         verify(this.testProvider.mock).testStepNoArgs();
-        assertThat(response.getStatus(),equalTo(ERRONEOUS));
-        assertThat(response.getErrorMessage(),equalTo("Doesn't work"));
+        assertThat(response.getStatus(), equalTo(ERRONEOUS));
+        assertThat(response.getErrorMessage(), equalTo("Doesn't work"));
         assertThat(response.getDuration().getSeconds(), greaterThanOrEqualTo(1l));
     }
 
@@ -137,6 +146,16 @@ class StepMethodAnnotationProcessorTest {
         final String sid = this.testProvider.createSession(ProviderOptions.builder().sessionTimeout(ofMinutes(1)).build());
         this.testProvider.execute(sid, StepRequest.builder().id("testStepExternalNoArgs").build());
         verify(this.externalBean.mock).testStepExternalNoArgs();
+    }
+
+    @Test
+    public void testDuplicateNamedStepMethods() throws InterruptedException {
+        final String sid = this.testProvider.createSession(ProviderOptions.builder().sessionTimeout(ofMinutes(1)).build());
+        this.testProvider.execute(sid, StepRequest.builder().id("dup").build());
+        verify(this.testProvider.mock).dup();
+        verify(this.testProvider.mock, times(0)).dup(anyString());
+        this.testProvider.execute(sid, StepRequest.builder().id("dup_1").argument("data", "abc").build());
+        verify(this.testProvider.mock).dup("abc");
     }
 
 }

@@ -62,12 +62,17 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
             } else {
                 throw new ProviderException("Invalid usage of step method annotation or target provider isn't resolvable: " + method.toString());
             }
+            String invokerName = method.getName();
+            int i = 1;
+            while (provider.stepInvokers.containsKey(invokerName)) {
+                invokerName = method.getName() + "_" + (i++);
+            }
             final StepSpec.StepSpecBuilder<Object> specBuilder = StepSpec.builder();
             specBuilder.
-                    id(method.getName()).
+                    id(invokerName).
                     pattern(stepMethodAno.pattern()).
                     patternType(stepMethodAno.patternType());
-            provider.stepInvokers.put(method.getName(), this.buildInvoker(bean, method, specBuilder));
+            provider.stepInvokers.put(invokerName, this.buildInvoker(bean, method, specBuilder));
             provider.stepSpecs.add(specBuilder.build());
         }, method -> method.isAnnotationPresent(StepMethod.class));
     }
