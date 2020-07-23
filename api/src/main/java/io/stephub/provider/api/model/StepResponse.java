@@ -24,12 +24,17 @@ public class StepResponse<VALUE> {
             return this.name().toLowerCase();
         }
     }
+
     @NotNull
     private StepStatus status;
+
     @NotNull
     @JsonFormat(shape = JsonFormat.Shape.STRING)
-    private Duration duration;
+    @Builder.Default
+    private Duration duration = Duration.ZERO;
+
     private String errorMessage;
+
     @Valid
     private VALUE output;
 }
