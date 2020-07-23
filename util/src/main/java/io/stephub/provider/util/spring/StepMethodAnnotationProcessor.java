@@ -130,7 +130,7 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
                     stepResponse.setStatus(PASSED);
                     stepResponse.setOutput(objResponse);
                 }
-                if (stepResponse.getDuration() == null) {
+                if (stepResponse.getDuration() == Duration.ZERO) {
                     stepResponse.setDuration(Duration.ofMillis(end - start));
                 }
                 return stepResponse;
