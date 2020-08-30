@@ -15,5 +15,5 @@ public @interface StepMethod {
 
     Class<? extends SpringBeanProvider> provider() default SpringBeanProvider.class;
 
-    PatternType patternType() default PatternType.REGEX;
+    PatternType patternType() default PatternType.SIMPLE;
 }
