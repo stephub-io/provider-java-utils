@@ -38,7 +38,7 @@ public abstract class SpringBeanProvider<S extends LocalProviderAdapter.SessionS
     protected abstract String getName();
 
     protected String getVersion() throws ProviderException {
-        return this.buildProperties != null ? this.buildProperties.getVersion() : "unknown";
+        return this.buildProperties != null ? this.buildProperties.getVersion() : null;
     }
 
     protected abstract SCHEMA getOptionsSchema();
