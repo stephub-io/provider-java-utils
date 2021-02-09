@@ -55,7 +55,7 @@ public class GenericProviderControllerTest {
         this.mockMvc.perform(get("/")).
                 andDo(print()).andExpect(status().isOk()).
                 andExpect(jsonPath("$.name", is(this.provider.getName()))).
-                andExpect(jsonPath("$.version", notNullValue())).
+                andExpect(jsonPath("$.version", nullValue())).
                 andExpect(jsonPath("$.optionsSchema").isMap()).
                 andExpect(jsonPath("$.optionsSchema.type", is("object"))).
                 andExpect(jsonPath("$.optionsSchema.properties", aMapWithSize(1))).
@@ -149,7 +149,7 @@ public class GenericProviderControllerTest {
 
         @StepMethod(pattern = ".*")
         public StepResponse<Object> step1(@StepArgument(name = "arg1") final boolean arg1,
-                                  @StepArgument(name = "arg2") final String arg2) {
+                                          @StepArgument(name = "arg2") final String arg2) {
             return this.mock.step1(arg1, arg2);
         }
     }
