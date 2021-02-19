@@ -16,7 +16,6 @@ import java.util.List;
 @ToString
 public class StepSpec<SCHEMA> {
     public enum PayloadType {
-        NONE,
         DOC_STRING,
         DATA_TABLE;
 
@@ -37,13 +36,13 @@ public class StepSpec<SCHEMA> {
     @NotNull
     private List<ArgumentSpec<SCHEMA>> arguments = new ArrayList<>();
 
-    @Builder.Default
-    @NotNull
-    private PayloadType payload = PayloadType.NONE;
+    private PayloadType payload = null;
     @Valid
     private DataTableSpec<SCHEMA> dataTable;
     @Valid
     private DocStringSpec<SCHEMA> docString;
     @Valid
     private OutputSpec<SCHEMA> output;
+
+    private Documentation doc;
 }

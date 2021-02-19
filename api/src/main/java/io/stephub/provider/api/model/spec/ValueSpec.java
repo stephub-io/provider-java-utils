@@ -15,4 +15,6 @@ public abstract class ValueSpec<SCHEMA> {
     private SCHEMA schema;
     @Builder.Default
     private final boolean strict = false;
+
+    private Documentation doc;
 }

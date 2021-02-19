@@ -13,4 +13,6 @@ import javax.validation.Valid;
 public class OutputSpec<SCHEMA> {
     @Valid
     private SCHEMA schema;
+
+    private Documentation doc;
 }

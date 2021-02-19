@@ -7,10 +7,9 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER})
-public @interface StepArgument {
-    String name();
+public @interface StepDocString {
+    StepDoc doc() default @StepDoc();
 
     boolean strict() default false;
 
-    StepDoc doc() default @StepDoc();
 }

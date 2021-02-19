@@ -7,7 +7,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
-import java.util.ArrayList;
 import java.util.List;
 
 import static io.stephub.provider.api.util.Patterns.ID_PATTERN_STR;
@@ -38,4 +37,6 @@ public class DataTableSpec<SCHEMA> {
     @NotNull
     @Size(min = 1)
     private List<ColumnSpec<SCHEMA>> columns;
+
+    private Documentation doc;
 }

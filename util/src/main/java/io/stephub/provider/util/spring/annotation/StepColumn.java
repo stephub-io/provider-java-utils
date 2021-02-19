@@ -7,8 +7,10 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER})
-public @interface StepArgument {
+public @interface StepColumn {
     String name();
+
+    Class<?> type();
 
     boolean strict() default false;
 

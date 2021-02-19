@@ -16,4 +16,8 @@ public @interface StepMethod {
     Class<? extends SpringBeanProvider> provider() default SpringBeanProvider.class;
 
     PatternType patternType() default PatternType.SIMPLE;
+
+    StepDoc doc() default @StepDoc();
+
+    StepDoc outputDoc() default @StepDoc();
 }

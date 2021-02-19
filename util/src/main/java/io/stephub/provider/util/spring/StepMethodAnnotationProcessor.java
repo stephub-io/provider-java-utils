@@ -3,13 +3,10 @@ package io.stephub.provider.util.spring;
 import io.stephub.provider.api.ProviderException;
 import io.stephub.provider.api.model.StepRequest;
 import io.stephub.provider.api.model.StepResponse;
-import io.stephub.provider.api.model.spec.ArgumentSpec;
-import io.stephub.provider.api.model.spec.OutputSpec;
-import io.stephub.provider.api.model.spec.StepSpec;
+import io.stephub.provider.api.model.spec.*;
 import io.stephub.provider.util.LocalProviderAdapter;
 import io.stephub.provider.util.StepFailedException;
-import io.stephub.provider.util.spring.annotation.StepArgument;
-import io.stephub.provider.util.spring.annotation.StepMethod;
+import io.stephub.provider.util.spring.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,11 +14,11 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.util.ReflectionUtils;
 
-import java.lang.reflect.AnnotatedType;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
+import java.lang.reflect.*;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static io.stephub.provider.api.model.StepResponse.StepStatus.*;
 
@@ -71,7 +68,8 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
             specBuilder.
                     id(invokerName).
                     pattern(stepMethodAno.pattern()).
-                    patternType(stepMethodAno.patternType());
+                    patternType(stepMethodAno.patternType()).
+                    doc(this.getDoc(stepMethodAno.doc()));
             provider.stepInvokers.put(invokerName, this.buildInvoker(bean, method, specBuilder));
             provider.stepSpecs.add(specBuilder.build());
         }, method -> method.isAnnotationPresent(StepMethod.class));
@@ -82,36 +80,68 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
         final ParameterAccessor[] parameterAccessors = new ParameterAccessor[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             final Parameter parameter = parameters[i];
-            ParameterAccessor accessor = null;
+            final ParameterAccessor accessor;
             if (LocalProviderAdapter.SessionState.class.isAssignableFrom(parameter.getType())) {
                 accessor = ((sessionId, state, request) -> state);
-            } else {
+            } else if (parameter.isAnnotationPresent(StepArgument.class)) {
                 final StepArgument expectedArgument = parameter.getAnnotation(StepArgument.class);
-                if (expectedArgument != null) {
+                accessor = (((sessionId, state, request) ->
+                {
+                    final Object value = request.getArguments().get(expectedArgument.name());
+                    if (value == null) {
+                        throw new ProviderException("Missing argument with name=" + expectedArgument.name());
+                    }
+                    return value;
+                }));
+                specBuilder.argument(
+                        ArgumentSpec.builder().name(expectedArgument.name()).
+                                schema(this.wrapSchema(parameter.getAnnotatedType())).
+                                strict(expectedArgument.strict()).
+                                doc(this.getDoc(expectedArgument.doc())).
+                                build()
+                );
+            } else if (parameter.isAnnotationPresent(StepDocString.class)) {
+                final StepDocString expectedPayload = parameter.getAnnotation(StepDocString.class);
+                accessor = (((sessionId, state, request) ->
+                        request.getDocString()));
+                specBuilder.payload(StepSpec.PayloadType.DOC_STRING).docString(DocStringSpec.builder().
+                        strict(expectedPayload.strict()).
+                        schema(this.wrapSchema(parameter.getAnnotatedType())).
+                        doc(this.getDoc(expectedPayload.doc())).build());
+            } else if (parameter.isAnnotationPresent(StepDataTable.class)) {
+                final StepDataTable expectedPayload = parameter.getAnnotation(StepDataTable.class);
+                if (List.class.isAssignableFrom(parameter.getType())) {
                     accessor = (((sessionId, state, request) ->
-                    {
-                        final Object value = request.getArguments().get(expectedArgument.name());
-                        if (value == null) {
-                            throw new ProviderException("Missing argument with name=" + expectedArgument.name());
-                        }
-                        return value;
-                    }));
-                    specBuilder.argument(
-                            ArgumentSpec.builder().name(expectedArgument.name()).
-                                    schema(this.wrapSchema(parameter.getAnnotatedType())).
-                                    strict(expectedArgument.strict()).
-                                    build()
-                    );
+                            request.getDataTable()));
+                    specBuilder
+                            .payload(StepSpec.PayloadType.DATA_TABLE)
+                            .dataTable(
+                                    DataTableSpec.builder()
+                                            .header(expectedPayload.header())
+                                            .doc(this.getDoc(expectedPayload.doc()))
+                                            .columns(
+                                                    Arrays.stream(expectedPayload.columns()).map(stepColumn ->
+                                                            DataTableSpec.ColumnSpec.builder().name(stepColumn.name())
+                                                                    .schema(this.wrapSchema(stepColumn.type()))
+                                                                    .strict(stepColumn.strict())
+                                                                    .doc(this.getDoc(stepColumn.doc())).build()
+                                                    ).collect(Collectors.toList())
+                                            ).build()
+                            );
                 } else {
-                    throw new ProviderException("Unsatisfiable step method parameter [" + i + "] with name=" + parameter.getName());
+                    throw new ProviderException("Expected type List as DataTable for step method parameter [" + i + "] with name=" + parameter.getName() + ", but got " + parameter.getType());
                 }
+            } else {
+                throw new ProviderException("Unsatisfiable step method parameter [" + i + "] with name=" + parameter.getName());
             }
             parameterAccessors[i] = accessor;
         }
         final AnnotatedType returnType = stepMethod.getAnnotatedReturnType();
         if (returnType != null && !stepMethod.getReturnType().equals(Void.TYPE) &&
                 !StepResponse.class.isAssignableFrom(stepMethod.getReturnType())) {
-            specBuilder.output(OutputSpec.builder().schema(this.wrapSchema(returnType)).build());
+            specBuilder.output(OutputSpec.builder().schema(this.wrapSchema(returnType))
+                    .doc(this.getDoc(stepMethod.getAnnotation(StepMethod.class).outputDoc()))
+                    .build());
         }
         return (((sessionId, state, request) -> {
             final Object[] args = new Object[parameterAccessors.length];
@@ -149,7 +179,15 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
         }));
     }
 
-    protected Object wrapSchema(final AnnotatedType type) {
+    private Object wrapSchema(final AnnotatedType type) {
+        if (type.getType() instanceof ParameterizedType) {
+            return this.wrapSchema((Class<?>) ((ParameterizedType) type.getType()).getRawType());
+        } else {
+            return this.wrapSchema((Class<?>) type.getType());
+        }
+    }
+
+    protected Object wrapSchema(final Type type) {
         return type;
     }
 
@@ -157,5 +195,11 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
         Object getParameter(String sessionId, LocalProviderAdapter.SessionState<?> state, StepRequest<Object> request);
     }
 
-
+    private Documentation getDoc(final StepDoc docAnnotation) {
+        if (docAnnotation != null) {
+            return Documentation.builder().description(docAnnotation.description())
+                    .examples(Arrays.asList(docAnnotation.examples())).build();
+        }
+        return null;
+    }
 }

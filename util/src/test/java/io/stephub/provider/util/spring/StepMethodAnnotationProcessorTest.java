@@ -3,9 +3,9 @@ package io.stephub.provider.util.spring;
 import io.stephub.provider.api.model.ProviderOptions;
 import io.stephub.provider.api.model.StepRequest;
 import io.stephub.provider.api.model.StepResponse;
+import io.stephub.provider.api.model.spec.StepSpec;
 import io.stephub.provider.util.LocalProviderAdapter;
-import io.stephub.provider.util.spring.annotation.StepArgument;
-import io.stephub.provider.util.spring.annotation.StepMethod;
+import io.stephub.provider.util.spring.annotation.*;
 import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +15,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static io.stephub.provider.api.model.StepResponse.StepStatus.ERRONEOUS;
 import static java.time.Duration.ofMinutes;
@@ -50,6 +54,23 @@ class StepMethodAnnotationProcessorTest {
                                                          @StepArgument(name = "enabled") final boolean arg1,
                                                          @StepArgument(name = "data") final String arg2) {
             return this.mock.testStepMultipleArgs(someState, arg1, arg2);
+        }
+
+        @StepMethod(pattern = "Doc with arg")
+        public StepResponse<Object> testPayloadDocString(final TestState someState,
+                                                         @StepDocString final String doc,
+                                                         @StepArgument(name = "arg") final String arg) {
+            return this.mock.testPayloadDocString(someState, doc, arg);
+        }
+
+        @StepMethod(pattern = "Data table with arg")
+        public StepResponse<Object> testPayloadDataTable(final TestState someState,
+                                                         @StepDataTable(
+                                                                 header = true,
+                                                                 columns = {@StepColumn(name = "col1", type = boolean.class)}
+                                                         ) final List<Map<String, ?>> dataTable,
+                                                         @StepArgument(name = "arg") final String arg) {
+            return this.mock.testPayloadDataTable(someState, dataTable, arg);
         }
 
         @StepMethod(pattern = "Dup1")
@@ -154,4 +175,47 @@ class StepMethodAnnotationProcessorTest {
         assertThat(this.testProvider.stepInvokers, hasKey("dup_1"));
     }
 
+    @Test
+    public void testStepDocWithArg() {
+        final String sid = this.testProvider.createSession(ProviderOptions.builder().sessionTimeout(ofMinutes(1)).build());
+        this.testProvider.execute(sid, StepRequest.builder().
+                id("testPayloadDocString").
+                argument("arg", "dddd").
+                docString("my doc").
+                build());
+        verify(this.testProvider.mock).testPayloadDocString(
+                this.testProvider.state,
+                "my doc",
+                "dddd"
+        );
+    }
+
+
+    @Test
+    public void testStepDataTableWithArg() {
+        final String sid = this.testProvider.createSession(ProviderOptions.builder().sessionTimeout(ofMinutes(1)).build());
+        this.testProvider.execute(sid, StepRequest.builder().
+                id("testPayloadDataTable").
+                argument("arg", "dddd").
+                dataTable(Collections.singletonList(Collections.singletonMap("col1", Boolean.TRUE))).
+                build());
+        verify(this.testProvider.mock).testPayloadDataTable(
+                this.testProvider.state,
+                Collections.singletonList(Collections.singletonMap("col1", Boolean.TRUE)),
+                "dddd"
+        );
+        final StepSpec<Class<?>> stepSpec = this.testProvider.getInfo().getSteps().stream().filter(classStepSpec -> classStepSpec.getId().equals("testPayloadDataTable")).findFirst().get();
+        // Spec arg
+        assertThat(stepSpec.getArguments(), hasSize(1));
+        assertThat(stepSpec.getArguments().get(0).getName(), equalTo("arg"));
+        assertThat(stepSpec.getArguments().get(0).getSchema(), equalTo(String.class));
+
+        // Spec data table
+        assertThat(stepSpec.getPayload(), equalTo(StepSpec.PayloadType.DATA_TABLE));
+        assertThat(stepSpec.getDataTable().isHeader(), equalTo(true));
+        assertThat(stepSpec.getDataTable().getColumns(), hasSize(1));
+        assertThat(stepSpec.getDataTable().getColumns().get(0).getName(), equalTo("col1"));
+        assertThat(stepSpec.getDataTable().getColumns().get(0).getSchema(), equalTo(boolean.class));
+
+    }
 }

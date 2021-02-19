@@ -17,8 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
-import java.lang.reflect.AnnotatedType;
-import java.lang.reflect.ParameterizedType;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +34,7 @@ public class GenericProviderController {
 
     @GetMapping(value = "/", produces = APPLICATION_JSON_VALUE)
     @ResponseBody
-    public ProviderInfo<AnnotatedType> getProviderInfo() {
+    public ProviderInfo<Class<?>> getProviderInfo() {
         return this.provider.getInfo();
     }
 
@@ -44,7 +42,7 @@ public class GenericProviderController {
     @ResponseBody
     @ResponseStatus(HttpStatus.CREATED)
     public StartedSession createSession(@RequestBody final ProviderOptions<Object> options) {
-        options.setOptions(this.objectMapper.convertValue(options.getOptions(), this.getClass(this.provider.getInfo().getOptionsSchema())));
+        options.setOptions(this.objectMapper.convertValue(options.getOptions(), this.provider.getInfo().getOptionsSchema()));
         return StartedSession.builder().id(this.provider.createSession((ProviderOptions) options)).build();
     }
 
@@ -58,14 +56,14 @@ public class GenericProviderController {
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
     public StepResponse<Object> executeStep(@PathVariable("sid") final String sid, @Valid @RequestBody final StepRequest<Object> request) {
-        final StepSpec<AnnotatedType> stepSpec = this.provider.getInfo().getSteps().stream().filter(s -> s.getId().equals(request.getId())).findFirst().
+        final StepSpec<Class<?>> stepSpec = this.provider.getInfo().getSteps().stream().filter(s -> s.getId().equals(request.getId())).findFirst().
                 orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Step not found for id=" + request.getId()));
         final Map<String, Object> dArguments = new HashMap<>();
         stepSpec.getArguments().forEach(
                 as -> {
                     final Object inputValue = request.getArguments().get(as.getName());
                     if (inputValue != null) {
-                        dArguments.put(as.getName(), this.objectMapper.convertValue(inputValue, this.getClass(as.getSchema())));
+                        dArguments.put(as.getName(), this.objectMapper.convertValue(inputValue, as.getSchema()));
                     } else {
                         dArguments.put(as.getName(), null);
                     }
@@ -85,13 +83,5 @@ public class GenericProviderController {
     public static class StartedSession {
         private String id;
 
-    }
-
-    private Class<?> getClass(AnnotatedType type) {
-        if (type.getType() instanceof ParameterizedType) {
-            return (Class<?>) ((ParameterizedType) type.getType()).getRawType();
-        } else {
-            return (Class<?>) type.getType();
-        }
     }
 }
