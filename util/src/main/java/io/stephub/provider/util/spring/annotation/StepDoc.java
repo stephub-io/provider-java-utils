@@ -3,5 +3,11 @@ package io.stephub.provider.util.spring.annotation;
 public @interface StepDoc {
     String description() default "";
 
-    String[] examples() default {};
+    StepDocExample[] examples() default {};
+
+    public @interface StepDocExample {
+        String value() default "";
+
+        String description() default "";
+    }
 }

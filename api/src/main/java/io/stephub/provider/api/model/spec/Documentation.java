@@ -21,5 +21,22 @@ public class Documentation {
     /**
      * Examples in markdown.
      */
-    private List<String> examples;
+    private List<DocumentationExample> examples;
+
+    @NoArgsConstructor
+    @Getter
+    @ToString
+    @EqualsAndHashCode
+    @SuperBuilder
+    public static class DocumentationExample {
+        /**
+         * Example value in JSON representation.
+         */
+        private String value;
+
+        /**
+         * Description in markdown.
+         */
+        private String description;
+    }
 }

@@ -198,7 +198,10 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
     private Documentation getDoc(final StepDoc docAnnotation) {
         if (docAnnotation != null) {
             return Documentation.builder().description(docAnnotation.description())
-                    .examples(Arrays.asList(docAnnotation.examples())).build();
+                    .examples(Arrays.asList(docAnnotation.examples()).stream().map(
+                            stepDocExample -> Documentation.DocumentationExample.builder().value(stepDocExample.value())
+                                    .description(stepDocExample.description()).build()
+                    ).collect(Collectors.toList())).build();
         }
         return null;
     }
