@@ -44,5 +44,5 @@ public class StepSpec<SCHEMA> {
     @Valid
     private OutputSpec<SCHEMA> output;
 
-    private Documentation doc;
+    private String description;
 }

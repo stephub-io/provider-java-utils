@@ -17,7 +17,7 @@ public @interface StepMethod {
 
     PatternType patternType() default PatternType.SIMPLE;
 
-    StepDoc doc() default @StepDoc();
+    String description() default "";
 
     StepDoc outputDoc() default @StepDoc();
 }

@@ -58,7 +58,12 @@ class StepMethodAnnotationProcessorTest {
 
         @StepMethod(pattern = "Doc with arg")
         public StepResponse<Object> testPayloadDocString(final TestState someState,
-                                                         @StepDocString final String doc,
+                                                         @StepDocString(doc = @StepDoc(
+                                                                 examples = {@StepDoc.StepDocExample(
+                                                                         value = "abc",
+                                                                         description = "def"
+                                                                 )}
+                                                         )) final String doc,
                                                          @StepArgument(name = "arg") final String arg) {
             return this.mock.testPayloadDocString(someState, doc, arg);
         }
@@ -188,6 +193,13 @@ class StepMethodAnnotationProcessorTest {
                 "my doc",
                 "dddd"
         );
+
+        // Verify spec
+        final StepSpec<Class<?>> stepSpec = this.testProvider.getInfo().getSteps().stream().filter(classStepSpec -> classStepSpec.getId().equals("testPayloadDocString")).findFirst().get();
+        assertThat(stepSpec.getPayload(), equalTo(StepSpec.PayloadType.DOC_STRING));
+        assertThat(stepSpec.getDocString().getDoc().getExamples(), hasSize(1));
+        assertThat(stepSpec.getDocString().getDoc().getExamples().get(0).getValue(), equalTo("abc"));
+        assertThat(stepSpec.getDocString().getDoc().getExamples().get(0).getDescription(), equalTo("def"));
     }
 
 

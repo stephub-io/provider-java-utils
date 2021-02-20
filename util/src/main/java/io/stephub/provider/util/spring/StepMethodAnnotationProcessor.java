@@ -8,6 +8,7 @@ import io.stephub.provider.util.LocalProviderAdapter;
 import io.stephub.provider.util.StepFailedException;
 import io.stephub.provider.util.spring.annotation.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -69,7 +70,7 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
                     id(invokerName).
                     pattern(stepMethodAno.pattern()).
                     patternType(stepMethodAno.patternType()).
-                    doc(this.getDoc(stepMethodAno.doc()));
+                    description(StringUtils.isNotBlank(stepMethodAno.description()) ? stepMethodAno.description() : null);
             provider.stepInvokers.put(invokerName, this.buildInvoker(bean, method, specBuilder));
             provider.stepSpecs.add(specBuilder.build());
         }, method -> method.isAnnotationPresent(StepMethod.class));
