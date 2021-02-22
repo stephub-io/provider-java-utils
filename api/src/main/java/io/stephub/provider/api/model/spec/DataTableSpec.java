@@ -38,5 +38,5 @@ public class DataTableSpec<SCHEMA> {
     @Size(min = 1)
     private List<ColumnSpec<SCHEMA>> columns;
 
-    private Documentation doc;
+    private String description;
 }

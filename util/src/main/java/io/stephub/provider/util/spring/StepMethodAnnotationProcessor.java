@@ -119,7 +119,7 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
                             .dataTable(
                                     DataTableSpec.builder()
                                             .header(expectedPayload.header())
-                                            .doc(this.getDoc(expectedPayload.doc()))
+                                            .description(StringUtils.isNotBlank(expectedPayload.description()) ? expectedPayload.description() : null)
                                             .columns(
                                                     Arrays.stream(expectedPayload.columns()).map(stepColumn ->
                                                             DataTableSpec.ColumnSpec.builder().name(stepColumn.name())
