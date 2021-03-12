@@ -8,6 +8,7 @@ import lombok.experimental.SuperBuilder;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.time.Duration;
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -37,4 +38,8 @@ public class StepResponse<VALUE> {
 
     @Valid
     private VALUE output;
+
+    @Valid
+    @Singular
+    private List<LogEntry> logs;
 }

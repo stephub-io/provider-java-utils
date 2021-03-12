@@ -1,6 +1,7 @@
 package io.stephub.provider.util.spring;
 
 import io.stephub.provider.api.ProviderException;
+import io.stephub.provider.api.model.LogEntry;
 import io.stephub.provider.api.model.StepRequest;
 import io.stephub.provider.api.model.StepResponse;
 import io.stephub.provider.api.model.spec.*;
@@ -17,6 +18,7 @@ import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.*;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -79,6 +81,7 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
     private SpringBeanProvider.StepInvoker<Object> buildInvoker(final Object bean, final Method stepMethod, final StepSpec.StepSpecBuilder<Object> specBuilder) {
         final Parameter[] parameters = stepMethod.getParameters();
         final ParameterAccessor[] parameterAccessors = new ParameterAccessor[parameters.length];
+        final List<LogEntry> logEntries = new ArrayList<>();
         for (int i = 0; i < parameters.length; i++) {
             final Parameter parameter = parameters[i];
             final ParameterAccessor accessor;
@@ -132,6 +135,8 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
                 } else {
                     throw new ProviderException("Expected type List as DataTable for step method parameter [" + i + "] with name=" + parameter.getName() + ", but got " + parameter.getType());
                 }
+            } else if (StepExecutionContext.class.isAssignableFrom(parameter.getType())) {
+                accessor = ((sessionId, state, request) -> (StepExecutionContext) logEntry -> logEntries.add(logEntry));
             } else {
                 throw new ProviderException("Unsatisfiable step method parameter [" + i + "] with name=" + parameter.getName());
             }
@@ -156,10 +161,17 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
                 final long end = System.currentTimeMillis();
                 if (objResponse instanceof StepResponse) {
                     stepResponse = (StepResponse<Object>) objResponse;
+                    final List<LogEntry> composed = new ArrayList<>();
+                    if (stepResponse.getLogs() != null) {
+                        composed.addAll(stepResponse.getLogs());
+                    }
+                    composed.addAll(logEntries);
+                    stepResponse.setLogs(composed);
                 } else {
                     stepResponse = new StepResponse<>();
                     stepResponse.setStatus(PASSED);
                     stepResponse.setOutput(objResponse);
+                    stepResponse.setLogs(logEntries);
                 }
                 if (stepResponse.getDuration() == Duration.ZERO) {
                     stepResponse.setDuration(Duration.ofMillis(end - start));

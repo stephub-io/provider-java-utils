@@ -1,5 +1,6 @@
 package io.stephub.provider.util.spring;
 
+import io.stephub.provider.api.model.LogEntry;
 import io.stephub.provider.api.model.ProviderOptions;
 import io.stephub.provider.api.model.StepRequest;
 import io.stephub.provider.api.model.StepResponse;
@@ -86,6 +87,11 @@ class StepMethodAnnotationProcessorTest {
         @StepMethod(pattern = "Dup2")
         public StepResponse<Object> dup(@StepArgument(name = "data") final String arg) {
             return this.mock.dup(arg);
+        }
+
+        @StepMethod(pattern = "testLogs")
+        public void testLogs(final StepExecutionContext sec) {
+            sec.addLog(LogEntry.builder().message("Hello").build());
         }
 
         @Override
@@ -228,6 +234,13 @@ class StepMethodAnnotationProcessorTest {
         assertThat(stepSpec.getDataTable().getColumns(), hasSize(1));
         assertThat(stepSpec.getDataTable().getColumns().get(0).getName(), equalTo("col1"));
         assertThat(stepSpec.getDataTable().getColumns().get(0).getSchema(), equalTo(boolean.class));
+    }
 
+    @Test
+    public void testLogs() {
+        final String sid = this.testProvider.createSession(ProviderOptions.builder().sessionTimeout(ofMinutes(1)).build());
+        final StepResponse<Object> response = this.testProvider.execute(sid, StepRequest.builder().id("testLogs").build());
+        assertThat(response.getLogs(), hasSize(1));
+        assertThat(response.getLogs().get(0).getMessage(), equalTo("Hello"));
     }
 }
