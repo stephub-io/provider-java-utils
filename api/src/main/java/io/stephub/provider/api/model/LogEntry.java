@@ -18,6 +18,11 @@ public class LogEntry {
     @Singular
     List<LogAttachment> attachments = new ArrayList<>();
 
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Data
+    @Builder
+    @EqualsAndHashCode
     public static class LogAttachment {
         private String contentType;
         private String fileName;
