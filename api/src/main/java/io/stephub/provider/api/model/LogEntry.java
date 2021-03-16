@@ -23,6 +23,7 @@ public class LogEntry {
     @Data
     @Builder
     @EqualsAndHashCode
+    @ToString(exclude = "content")
     public static class LogAttachment {
         private String contentType;
         private String fileName;
