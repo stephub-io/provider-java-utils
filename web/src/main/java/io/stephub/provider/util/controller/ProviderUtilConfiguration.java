@@ -1,7 +1,9 @@
 package io.stephub.provider.util.controller;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.stephub.provider.util.controller.jackson.ClassToSchemaSerializer;
 import io.stephub.provider.util.spring.StepMethodAnnotationProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,8 @@ public class ProviderUtilConfiguration {
         final SimpleModule module = new SimpleModule();
         module.addSerializer(Class.class, new ClassToSchemaSerializer());
         this.objectMapper.registerModule(module);
+        this.objectMapper.registerModule(new JavaTimeModule());
+        this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     @Bean
