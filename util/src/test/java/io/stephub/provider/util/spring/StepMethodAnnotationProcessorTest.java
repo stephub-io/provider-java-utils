@@ -243,4 +243,14 @@ class StepMethodAnnotationProcessorTest {
         assertThat(response.getLogs(), hasSize(1));
         assertThat(response.getLogs().get(0).getMessage(), equalTo("Hello"));
     }
+
+    @Test
+    public void testDistinctLogs() {
+        final String sid = this.testProvider.createSession(ProviderOptions.builder().sessionTimeout(ofMinutes(1)).build());
+        this.testProvider.execute(sid, StepRequest.builder().id("testLogs").build());
+        final StepResponse<Object> response = this.testProvider.execute(sid, StepRequest.builder().id("testLogs").build());
+        assertThat(response.getLogs(), hasSize(1));
+        assertThat(response.getLogs().get(0).getMessage(), equalTo("Hello"));
+    }
+
 }
