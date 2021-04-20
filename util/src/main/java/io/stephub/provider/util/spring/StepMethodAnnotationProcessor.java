@@ -187,6 +187,7 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
                 }
                 return StepResponse.builder().status(status).errorMessage(e.getMessage()).
                         duration(Duration.ofMillis(System.currentTimeMillis() - start)).
+                        logs(logEntries).
                         build();
             }
         }));
