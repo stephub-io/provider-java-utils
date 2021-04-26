@@ -8,7 +8,7 @@
     <pluginGroups/>
     <servers>
         <server>
-            <id>bintray-mbok-stephub.io</id>
+            <id>cloudsmith</id>
             <username>${env.REPO_USERNAME}</username>
             <password>${env.REPO_PASSWORD}</password>
         </server>
