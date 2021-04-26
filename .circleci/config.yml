@@ -19,10 +19,14 @@ workflows:
   version: 2
   branch-build:
     jobs:
-      - build
+      - build:
+          context:
+            - Maven Repo
   release-build:
     jobs:
       - build-and-deploy:
+          context:
+            - Maven Repo
           filters:
             tags:
               only: /^[0-9\.]+/
