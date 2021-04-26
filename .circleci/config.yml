@@ -6,7 +6,6 @@ jobs:
       GOAL: package
     steps:
       - checkout
-      - run: echo ">$CS_USERNAME<"
       - run: docker build --build-arg version=$CIRCLE_BRANCH --build-arg goal=$GOAL -t stephub/spring-provider:$CIRCLE_BRANCH .
   build-and-deploy:
     machine: true
