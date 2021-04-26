@@ -28,10 +28,13 @@
     </modules>
 
     <distributionManagement>
+        <snapshotRepository>
+            <id>cloudsmith</id>
+            <url>https://maven.cloudsmith.io/stephub-io/stephub/</url>
+        </snapshotRepository>
         <repository>
-            <id>bintray-mbok-stephub.io</id>
-            <name>mbok-stephub.io</name>
-            <url>https://api.bintray.com/maven/mbok/stephub.io/spring-provider/;publish=1</url>
+            <id>cloudsmith</id>
+            <url>https://maven.cloudsmith.io/stephub-io/stephub/</url>
         </repository>
     </distributionManagement>
 
