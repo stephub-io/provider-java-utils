@@ -31,7 +31,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {StepMethodAnnotationProcessor.class, StepMethodAnnotationProcessorTest.SomeBean.class})
-@DirtiesContext
 class StepMethodAnnotationProcessorTest {
 
     public static class TestProvider extends SpringBeanProvider<TestState, Object, Class<?>, Object> {
@@ -149,6 +148,7 @@ class StepMethodAnnotationProcessorTest {
     }
 
     @Test
+    @DirtiesContext
     public void testInterceptorsRewritingRequestAndResponse() throws InterruptedException {
         final String sid = this.testProvider.createSession(ProviderOptions.builder().sessionTimeout(ofMinutes(1)).build());
         final AtomicBoolean interceptor1Called = new AtomicBoolean(false);
