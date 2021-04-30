@@ -1,7 +1,6 @@
 package io.stephub.provider.util.spring;
 
 import io.stephub.provider.api.ProviderException;
-import io.stephub.provider.api.model.LogEntry;
 import io.stephub.provider.api.model.StepRequest;
 import io.stephub.provider.api.model.StepResponse;
 import io.stephub.provider.api.model.spec.*;
@@ -18,7 +17,6 @@ import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.*;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -85,10 +83,10 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
             final Parameter parameter = parameters[i];
             final ParameterAccessor accessor;
             if (LocalProviderAdapter.SessionState.class.isAssignableFrom(parameter.getType())) {
-                accessor = ((sessionId, state, request, logEntries) -> state);
+                accessor = ((sessionId, state, sec, request) -> state);
             } else if (parameter.isAnnotationPresent(StepArgument.class)) {
                 final StepArgument expectedArgument = parameter.getAnnotation(StepArgument.class);
-                accessor = (((sessionId, state, request, logEntries) ->
+                accessor = (((sessionId, state, sec, request) ->
                 {
                     final Object value = request.getArguments().get(expectedArgument.name());
                     if (value == null) {
@@ -105,7 +103,7 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
                 );
             } else if (parameter.isAnnotationPresent(StepDocString.class)) {
                 final StepDocString expectedPayload = parameter.getAnnotation(StepDocString.class);
-                accessor = (((sessionId, state, request, logEntries) ->
+                accessor = (((sessionId, state, sec, request) ->
                         request.getDocString()));
                 specBuilder.payload(StepSpec.PayloadType.DOC_STRING).docString(DocStringSpec.builder().
                         strict(expectedPayload.strict()).
@@ -114,7 +112,7 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
             } else if (parameter.isAnnotationPresent(StepDataTable.class)) {
                 final StepDataTable expectedPayload = parameter.getAnnotation(StepDataTable.class);
                 if (List.class.isAssignableFrom(parameter.getType())) {
-                    accessor = (((sessionId, state, request, logEntries) ->
+                    accessor = (((sessionId, state, sec, request) ->
                             request.getDataTable()));
                     specBuilder
                             .payload(StepSpec.PayloadType.DATA_TABLE)
@@ -135,7 +133,7 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
                     throw new ProviderException("Expected type List as DataTable for step method parameter [" + i + "] with name=" + parameter.getName() + ", but got " + parameter.getType());
                 }
             } else if (StepExecutionContext.class.isAssignableFrom(parameter.getType())) {
-                accessor = ((sessionId, state, request, logEntries) -> (StepExecutionContext) logEntry -> logEntries.add(logEntry));
+                accessor = ((sessionId, state, sec, request) -> sec);
             } else {
                 throw new ProviderException("Unsatisfiable step method parameter [" + i + "] with name=" + parameter.getName());
             }
@@ -148,11 +146,10 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
                     .doc(this.getDoc(stepMethod.getAnnotation(StepMethod.class).outputDoc()))
                     .build());
         }
-        return (((sessionId, state, request) -> {
-            final List<LogEntry> logEntries = new ArrayList<>();
+        return (((sessionId, state, request, sec) -> {
             final Object[] args = new Object[parameterAccessors.length];
             for (int i = 0; i < parameterAccessors.length; i++) {
-                args[i] = parameterAccessors[i].getParameter(sessionId, state, request, logEntries);
+                args[i] = parameterAccessors[i].getParameter(sessionId, state, request, sec);
             }
             final long start = System.currentTimeMillis();
             try {
@@ -161,17 +158,10 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
                 final long end = System.currentTimeMillis();
                 if (objResponse instanceof StepResponse) {
                     stepResponse = (StepResponse<Object>) objResponse;
-                    final List<LogEntry> composed = new ArrayList<>();
-                    if (stepResponse.getLogs() != null) {
-                        composed.addAll(stepResponse.getLogs());
-                    }
-                    composed.addAll(logEntries);
-                    stepResponse.setLogs(composed);
                 } else {
                     stepResponse = new StepResponse<>();
                     stepResponse.setStatus(PASSED);
                     stepResponse.setOutput(objResponse);
-                    stepResponse.setLogs(logEntries);
                 }
                 if (stepResponse.getDuration() == Duration.ZERO) {
                     stepResponse.setDuration(Duration.ofMillis(end - start));
@@ -187,7 +177,6 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
                 }
                 return StepResponse.builder().status(status).errorMessage(e.getMessage()).
                         duration(Duration.ofMillis(System.currentTimeMillis() - start)).
-                        logs(logEntries).
                         build();
             }
         }));
@@ -206,7 +195,7 @@ public class StepMethodAnnotationProcessor implements BeanPostProcessor {
     }
 
     private interface ParameterAccessor {
-        Object getParameter(String sessionId, LocalProviderAdapter.SessionState<?> state, StepRequest<Object> request, List<LogEntry> logEntries);
+        Object getParameter(String sessionId, LocalProviderAdapter.SessionState<?> state, StepExecutionContext sec, StepRequest<Object> request);
     }
 
     private Documentation getDoc(final StepDoc docAnnotation) {

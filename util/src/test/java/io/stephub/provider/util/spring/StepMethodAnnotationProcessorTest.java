@@ -17,9 +17,11 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.stephub.provider.api.model.StepResponse.StepStatus.ERRONEOUS;
 import static java.time.Duration.ofMinutes;
@@ -29,6 +31,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {StepMethodAnnotationProcessor.class, StepMethodAnnotationProcessorTest.SomeBean.class})
+@DirtiesContext
 class StepMethodAnnotationProcessorTest {
 
     public static class TestProvider extends SpringBeanProvider<TestState, Object, Class<?>, Object> {
@@ -143,6 +146,23 @@ class StepMethodAnnotationProcessorTest {
         final StepResponse response = this.testProvider.execute(sid, StepRequest.builder().id("testStepNoArgs").build());
         verify(this.testProvider.mock).testStepNoArgs();
         assertThat(response.getDuration().getSeconds(), greaterThanOrEqualTo(1l));
+    }
+
+    @Test
+    public void testInterceptorsRewritingRequestAndResponse() throws InterruptedException {
+        final String sid = this.testProvider.createSession(ProviderOptions.builder().sessionTimeout(ofMinutes(1)).build());
+        final AtomicBoolean interceptor1Called = new AtomicBoolean(false);
+        this.testProvider.addInterceptor(chain -> {
+            interceptor1Called.set(true);
+            final StepResponse<Object> response = chain.proceed(chain.request());
+            response.setDuration(Duration.ofHours(1));
+            return response;
+        });
+        this.testProvider.addInterceptor(chain -> chain.proceed(StepRequest.builder().id("testStepNoArgs").build()));
+        final StepResponse response = this.testProvider.execute(sid, StepRequest.builder().id("unknown").build());
+        verify(this.testProvider.mock).testStepNoArgs();
+        assertThat(interceptor1Called.get(), equalTo(true));
+        assertThat(response.getDuration(), equalTo(Duration.ofHours(1)));
     }
 
     @Test

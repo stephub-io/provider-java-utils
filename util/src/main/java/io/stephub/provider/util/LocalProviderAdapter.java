@@ -11,6 +11,7 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.expiringmap.ExpirationPolicy;
 import net.jodah.expiringmap.ExpiringMap;
+import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -21,7 +22,7 @@ public abstract class LocalProviderAdapter<S extends LocalProviderAdapter.Sessio
 
     private final ExpiringMap<String, S> sessionStore = ExpiringMap.builder()
             .expirationListener((sessionId, state) -> {
-                log.info("Session expired: {}", sessionId);
+                LoggerFactory.getLogger(getClass()).info("Session expired: {}", sessionId);
                 this.stopState((S) state);
             })
             .variableExpiration()
